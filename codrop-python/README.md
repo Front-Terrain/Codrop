@@ -1,0 +1,38 @@
+# Codrop Python Bindings
+
+Universal, high-performance, adaptive lossless compression system.
+
+## Installation
+
+```bash
+pip install codrop
+```
+
+## Quick Start
+
+```python
+import codrop
+
+# Input bytes
+data = b"Hello Codrop! High performance adaptive compression for modern runtimes."
+
+# Compress (Profiles: LEVEL_AUTO, LEVEL_FAST, LEVEL_BALANCED, LEVEL_COMPACT)
+compressed = codrop.compress(data, level=codrop.LEVEL_BALANCED)
+print(f"Original: {len(data)} bytes, Compressed: {len(compressed)} bytes")
+
+# Decompress
+decompressed = codrop.decompress(compressed)
+assert decompressed == data
+print("Roundtrip successful!")
+```
+
+## Compression Profiles
+
+- `codrop.LEVEL_AUTO` (0): Adaptive classification, picks optimal codec or RAW fallback for high entropy.
+- `codrop.LEVEL_FAST` (1): LZF byte-aligned LZ engine. Maximum throughput.
+- `codrop.LEVEL_BALANCED` (2): LZH (LZ + Canonical Huffman). Best balance of ratio and speed.
+- `codrop.LEVEL_COMPACT` (3): LZA (LZ + tANS / Finite State Entropy). Maximum compression ratio.
+
+## License
+
+Licensed under MIT OR Apache-2.0.

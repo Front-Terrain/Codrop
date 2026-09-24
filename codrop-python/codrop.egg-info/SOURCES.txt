@@ -1,0 +1,8 @@
+README.md
+pyproject.toml
+codrop/__init__.py
+codrop/libcodrop.dll
+codrop.egg-info/PKG-INFO
+codrop.egg-info/SOURCES.txt
+codrop.egg-info/dependency_links.txt
+codrop.egg-info/top_level.txt
