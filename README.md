@@ -1,60 +1,87 @@
 # Codrop: Universal Adaptive Compression System
 
-Codrop is a next-generation, general-purpose compression ecosystem designed to provide a portable, high-performance alternative to traditional compression systems like gzip, Brotli, and Zstandard.
+Codrop is a general-purpose, lossless compression system designed around:
 
-## Philosophy
-
-> **One compression system that developers can use across servers, browsers, desktops, mobile devices, embedded environments, and different programming languages without manually maintaining multiple compression implementations and fallback strategies.**
-
-### Core Tenet
 > **Stable format, evolving encoder, portable decoder.**
 
 The `.cdp` container format is rigorously specified so that future encoder optimizations do not break backwards compatibility with existing decoders.
 
 ---
 
-## Ecosystem Architecture
+## Current Status: Milestone 0 (M0 - Minimal Working Codec)
 
-- **`libcodrop/`**: Core Rust reference implementation with zero non-standard runtime dependencies.
-- **`codrop-cli/`**: Universal command-line interface (`codrop compress`, `decompress`, `inspect`, `benchmark`).
-- **`codrop-wasm/`**: Pure WebAssembly build with zero native shims for direct in-browser streaming.
-- **`@codrop/node`**: Node.js native addon / N-API bindings.
-- **`codrop-python`**: Python C-FFI / PyO3 bindings.
-- **`codrop-mobile`**: C ABI bindings for Swift (iOS) and Kotlin (Android).
+The current implementation is **Milestone 0 (M0)**:
+- **Format:** Fully implements the `CDP1` binary stream container format (version 1.0).
+- **Supported Block Types:**
+  - `RAW` (Block Type 0): Verbatim byte passthrough with zero expansion.
+  - `RLE` (Block Type 1): Run-Length Encoding with ULEB128 run counts.
+- **Expansion Safeguard:** The encoder tests whether RLE produces a smaller representation than the original data; if not, it automatically emits `RAW` to prevent expansion.
+- **Integrity Validation:** Header CRC-8, per-block Castagnoli CRC32c, whole-stream 64-bit hashing, and explicit `EndOfStream` sentinel validation.
+- **Security:** Strict bounds checking, memory limit enforcement, and decompression bomb prevention.
+
+*Note: Higher-level compression schemes (LZF, LZH/Huffman, LZA/tANS) and pre-filters are defined in the format specification and will be introduced in subsequent milestones (M1+). Encountering them in M0 returns a clean unsupported feature error.*
 
 ---
 
-## Project Documentation & Deliverables
+## CLI Usage
+
+### Basic Commands
+
+```bash
+# Compress a file to .cdp
+codrop compress file.txt -o file.cdp
+
+# Decompress a .cdp container
+codrop decompress file.cdp -o restored.txt
+
+# Inspect .cdp container metadata and block layout
+codrop inspect file.cdp
+```
+
+### Exit Codes
+
+The `codrop` CLI returns standard, predictable exit codes:
+
+| Code | Meaning | Description |
+| :--- | :--- | :--- |
+| `0` | **Success** | Operation completed successfully |
+| `1` | **General Failure** | Command-line argument syntax error, file I/O error |
+| `2` | **Malformed Stream** | Invalid magic, corrupted header, checksum mismatch, unexpected EOF |
+| `3` | **Unsupported Feature** | Unsupported block type (e.g. LZF/LZH/LZA in M0) or format version |
+
+---
+
+## Ecosystem Architecture
+
+- **`libcodrop/`**: Core Rust reference implementation with zero non-standard runtime dependencies (`#![forbid(unsafe_code)]`).
+- **`codrop-cli/`**: Universal command-line interface (`codrop compress`, `decompress`, `inspect`).
+
+---
+
+## Technical Specifications & Documentation
 
 1. [Format & Protocol Specification (`CODROP_SPEC.md`)](file:///c:/Users/rishi/FrontTerrain/Codrop/CODROP_SPEC.md)
    - Formal binary layout of the `.cdp` container.
-   - Header, flags, block types (Raw, RLE, LZF, LZH, LZA).
+   - Header, flags, block types (RAW, RLE, LZF, LZH, LZA).
    - Window sizing, checksums, and streaming semantics.
    - Security constraints and decompression bomb prevention.
 
 2. [System Architecture & Research Document (`ARCHITECTURE.md`)](file:///c:/Users/rishi/FrontTerrain/Codrop/ARCHITECTURE.md)
    - Comparative analysis of Deflate, Brotli, Zstandard, LZ4, Snappy, LZMA.
-   - Algorithmic design of the adaptive classifier, match finders, and entropy stages.
-   - Encoder and decoder state machines.
+   - Algorithmic design of match finders, entropy stages, and state machines.
 
 3. [Benchmark & Evaluation Plan (`BENCHMARK_PLAN.md`)](file:///c:/Users/rishi/FrontTerrain/Codrop/BENCHMARK_PLAN.md)
    - Methodology, corpora (Silesia, Large Text, modern web assets, small payloads).
-   - Comparative evaluation protocols against gzip, Brotli, and Zstandard.
    - Machine-readable result schemas and reproducibility standards.
 
 ---
 
-## Roadmap
+## Development Milestones
 
-- [x] **Phase 0:** Research & Algorithmic Tradeoff Analysis
-- [x] **Phase 1:** Codrop Format Specification (`.cdp` v1.0)
-- [x] **Phase 2:** Minimal Core Encoder / Decoder (`RAW` and `RLE`)
-- [x] **Phase 3:** Fast LZ (`LZF`) & Hash-Chain Matcher
-- [x] **Phase 4:** Canonical Huffman Entropy Layer (`LZH`)
-- [x] **Phase 5:** Adaptive Profiling & Strategy Classifier
-- [x] **Phase 6:** Chunked Streaming Engine & Integrity Verification
-- [x] **Phase 7:** CLI Tool (`codrop-cli`: compress, decompress, inspect, test, benchmark)
-- [x] **Phase 8:** Fuzzing & Robustness Test Suite
-- [x] **Phase 9:** Performance Benchmarking Suite
-- [ ] **Phase 10:** Advanced tANS/LZA & Pre-filters (Phase 2 Roadmap)
-- [ ] **Phase 11:** WASM & Cross-Language Bindings (`@codrop/node`, `codrop-python`, `codrop-wasm`)
+- [x] **M0 (Current):** Minimal Working Codec (`CDP1`, Header, RAW, RLE, Streaming foundation, CLI, Fuzzing)
+- [ ] **M1:** Fast Byte-Aligned LZ (`LZF`)
+- [ ] **M2:** Canonical Huffman Entropy & Hash Chains (`LZH`)
+- [ ] **M3:** Adaptive Profiler & Strategy Classifier
+- [ ] **M4:** Advanced Streaming & Window Ring Optimization
+- [ ] **M5:** Finite State Entropy / tANS (`LZA`)
+- [ ] **M6:** Cross-Platform Bindings (C ABI, WASM, Node.js, Python, Mobile)
