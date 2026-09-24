@@ -1,6 +1,6 @@
-use std::io::{Read, Write};
 use crate::checksum::Crc32c;
 use crate::error::CodropError;
+use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BlockType {
@@ -10,7 +10,7 @@ pub enum BlockType {
     Lzh = 3,
     Lza = 4,
     TextPrefilter = 5,
-    Reserved = 6,
+    ReservedCustom = 6,
     EndOfStream = 7,
 }
 
@@ -25,7 +25,7 @@ impl TryFrom<u8> for BlockType {
             3 => Ok(BlockType::Lzh),
             4 => Ok(BlockType::Lza),
             5 => Ok(BlockType::TextPrefilter),
-            6 => Ok(BlockType::Reserved),
+            6 => Ok(BlockType::ReservedCustom),
             7 => Ok(BlockType::EndOfStream),
             _ => Err(CodropError::InvalidBlockType(val)),
         }
@@ -114,6 +114,14 @@ impl BlockHeader {
             return Err(CodropError::Io(e.to_string()));
         }
 
+        // Validate reserved bits (bits 5..7 must be zero)
+        if (b0[0] & 0xE0) != 0 {
+            return Err(CodropError::CorruptedHeader(format!(
+                "Non-zero reserved bits in block header: 0x{:02X}",
+                b0[0] & 0xE0
+            )));
+        }
+
         let block_type = BlockType::try_from(b0[0] & 0x07)?;
         let has_checksum = (b0[0] & (1 << 3)) != 0;
         let is_last = (b0[0] & (1 << 4)) != 0;
@@ -153,7 +161,9 @@ impl BlockHeader {
             }
             shift += 7;
             if shift >= 32 {
-                return Err(CodropError::CorruptedHeader("ULEB128 overflow in block uncompressed size".into()));
+                return Err(CodropError::CorruptedHeader(
+                    "ULEB128 overflow in block uncompressed size".into(),
+                ));
             }
         }
 
@@ -178,7 +188,9 @@ impl BlockHeader {
 
     pub fn verify_checksum(&self, decompressed_data: &[u8]) -> Result<(), CodropError> {
         if self.has_checksum {
-            let expected = self.checksum.ok_or(CodropError::CorruptedHeader("Missing block checksum".into()))?;
+            let expected = self.checksum.ok_or(CodropError::CorruptedHeader(
+                "Missing block checksum".into(),
+            ))?;
             let actual = Crc32c::compute(decompressed_data);
             if expected != actual {
                 return Err(CodropError::BlockChecksumMismatch { expected, actual });
@@ -196,7 +208,7 @@ mod tests {
     #[test]
     fn test_block_header_roundtrip() {
         let header = BlockHeader {
-            block_type: BlockType::Lzh,
+            block_type: BlockType::Rle,
             has_checksum: true,
             is_last: false,
             compressed_size: 4096,
@@ -210,6 +222,14 @@ mod tests {
         let mut cursor = Cursor::new(&buf);
         let parsed = BlockHeader::read_from(&mut cursor).unwrap();
         assert_eq!(header, parsed);
+    }
+
+    #[test]
+    fn test_block_header_reject_reserved_bits() {
+        let bad_b0 = [0xE0 | 0x01]; // reserved bits set with Rle type
+        let mut cursor = Cursor::new(&bad_b0);
+        let err = BlockHeader::read_from(&mut cursor).unwrap_err();
+        assert!(matches!(err, CodropError::CorruptedHeader(_)));
     }
 
     #[test]

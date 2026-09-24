@@ -1,8 +1,8 @@
-use std::io::{Read, Write};
 use crate::checksum::Crc8;
 use crate::error::CodropError;
 use crate::format::flags::HeaderFlags;
-use crate::format::magic::{CODROP_MAGIC, validate_magic};
+use crate::format::magic::{validate_magic, CODROP_MAGIC};
+use std::io::{Read, Write};
 
 pub const FORMAT_VERSION_MAJOR: u8 = 1;
 pub const FORMAT_VERSION_MINOR: u8 = 0;
@@ -39,13 +39,18 @@ impl Default for StreamHeader {
 
 impl StreamHeader {
     /// Calculate window size from code or descriptor
-    pub fn compute_window_size(window_code: u8, custom_exponent: Option<u8>) -> Result<u32, CodropError> {
+    pub fn compute_window_size(
+        window_code: u8,
+        custom_exponent: Option<u8>,
+    ) -> Result<u32, CodropError> {
         match window_code {
-            0 => Ok(64 * 1024),         // 64 KB
-            1 => Ok(1024 * 1024),       // 1 MB
-            2 => Ok(8 * 1024 * 1024),   // 8 MB
+            0 => Ok(64 * 1024),       // 64 KB
+            1 => Ok(1024 * 1024),     // 1 MB
+            2 => Ok(8 * 1024 * 1024), // 8 MB
             3 => {
-                let exp = custom_exponent.ok_or_else(|| CodropError::CorruptedHeader("Missing custom window exponent".into()))?;
+                let exp = custom_exponent.ok_or_else(|| {
+                    CodropError::CorruptedHeader("Missing custom window exponent".into())
+                })?;
                 if !(16..=27).contains(&exp) {
                     return Err(CodropError::InvalidWindowSize(1 << exp));
                 }
@@ -130,7 +135,7 @@ impl StreamHeader {
         reader.read_exact(&mut flags_buf)?;
         header_bytes.extend_from_slice(&flags_buf);
         let flags_u16 = u16::from_le_bytes(flags_buf);
-        let flags = HeaderFlags::from_u16(flags_u16);
+        let flags = HeaderFlags::try_from_u16(flags_u16)?;
 
         // 4. Custom Window Exponent if window_code == 3
         let custom_exponent = if flags.window_code == 3 {
@@ -157,7 +162,9 @@ impl StreamHeader {
                 }
                 shift += 7;
                 if shift >= 64 {
-                    return Err(CodropError::CorruptedHeader("ULEB128 overflow in uncompressed size".into()));
+                    return Err(CodropError::CorruptedHeader(
+                        "ULEB128 overflow in uncompressed size".into(),
+                    ));
                 }
             }
             Some(val)

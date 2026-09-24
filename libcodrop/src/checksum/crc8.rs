@@ -24,6 +24,12 @@ const CRC8_TABLE: [u8; 256] = {
     table
 };
 
+impl Default for Crc8 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Crc8 {
     pub fn new() -> Self {
         Self { state: 0x00 }

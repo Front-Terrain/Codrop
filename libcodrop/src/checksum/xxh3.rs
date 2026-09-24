@@ -10,6 +10,12 @@ const PRIME1: u64 = 0x9E3779B185EBCA87;
 const PRIME2: u64 = 0xC2B2AE3D27D4EB4F;
 const PRIME3: u64 = 0x165667B19E3779F9;
 
+impl Default for StreamHash64 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl StreamHash64 {
     pub fn new() -> Self {
         Self {

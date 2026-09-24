@@ -1,3 +1,4 @@
+use crate::format::BlockType;
 use std::fmt;
 
 /// Primary error type for all Codrop operations.
@@ -15,8 +16,11 @@ pub enum CodropError {
     /// Header contains corrupted or structurally contradictory fields.
     CorruptedHeader(String),
 
-    /// Encountered an unknown or reserved block type.
+    /// Encountered an unknown or illegal block type value.
     InvalidBlockType(u8),
+
+    /// Block type is valid according to format specification, but unsupported in this version/build (e.g. LZF/LZH/LZA in M0).
+    UnsupportedBlockType(BlockType),
 
     /// Backward match offset references data outside the initialized history window.
     InvalidOffset { offset: usize, max_valid: usize },
@@ -42,6 +46,9 @@ pub enum CodropError {
     /// Configured window size exceeds the maximum allowable threshold.
     InvalidWindowSize(u32),
 
+    /// Memory allocation request exceeds the configured safety limit.
+    MemoryLimitExceeded { limit: usize, requested: usize },
+
     /// Generic I/O error during reading or writing.
     Io(String),
 }
@@ -50,34 +57,74 @@ impl fmt::Display for CodropError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             CodropError::InvalidMagic(m) => {
-                write!(f, "Invalid Codrop magic: {:02X} {:02X} {:02X} {:02X}", m[0], m[1], m[2], m[3])
+                write!(
+                    f,
+                    "Invalid Codrop magic: {:02X} {:02X} {:02X} {:02X}",
+                    m[0], m[1], m[2], m[3]
+                )
             }
             CodropError::UnsupportedVersion { major, minor } => {
                 write!(f, "Unsupported format version: {}.{}", major, minor)
             }
             CodropError::HeaderChecksumMismatch { expected, actual } => {
-                write!(f, "Header CRC-8 mismatch: expected 0x{:02X}, found 0x{:02X}", expected, actual)
+                write!(
+                    f,
+                    "Header CRC-8 mismatch: expected 0x{:02X}, found 0x{:02X}",
+                    expected, actual
+                )
             }
             CodropError::CorruptedHeader(msg) => write!(f, "Corrupted header: {}", msg),
             CodropError::InvalidBlockType(t) => write!(f, "Invalid block type: {}", t),
+            CodropError::UnsupportedBlockType(t) => {
+                write!(f, "Unsupported block type for current codec: {:?}", t)
+            }
             CodropError::InvalidOffset { offset, max_valid } => {
-                write!(f, "Invalid match offset {} (max valid: {})", offset, max_valid)
+                write!(
+                    f,
+                    "Invalid match offset {} (max valid: {})",
+                    offset, max_valid
+                )
             }
             CodropError::InvalidMatchLength { length, remaining } => {
-                write!(f, "Invalid match length {} (remaining: {})", length, remaining)
+                write!(
+                    f,
+                    "Invalid match length {} (remaining: {})",
+                    length, remaining
+                )
             }
-            CodropError::CorruptedEntropyStream(msg) => write!(f, "Corrupted entropy stream: {}", msg),
+            CodropError::CorruptedEntropyStream(msg) => {
+                write!(f, "Corrupted entropy stream: {}", msg)
+            }
             CodropError::BlockChecksumMismatch { expected, actual } => {
-                write!(f, "Block CRC32c mismatch: expected 0x{:08X}, found 0x{:08X}", expected, actual)
+                write!(
+                    f,
+                    "Block CRC32c mismatch: expected 0x{:08X}, found 0x{:08X}",
+                    expected, actual
+                )
             }
             CodropError::StreamChecksumMismatch { expected, actual } => {
-                write!(f, "Stream checksum mismatch: expected 0x{:016X}, found 0x{:016X}", expected, actual)
+                write!(
+                    f,
+                    "Stream checksum mismatch: expected 0x{:016X}, found 0x{:016X}",
+                    expected, actual
+                )
             }
             CodropError::UnexpectedEof => write!(f, "Unexpected end of stream"),
             CodropError::DecompressionBombDetected { limit, requested } => {
-                write!(f, "Decompression bomb detected: requested {} exceeds limit {}", requested, limit)
+                write!(
+                    f,
+                    "Decompression bomb detected: requested {} exceeds limit {}",
+                    requested, limit
+                )
             }
             CodropError::InvalidWindowSize(size) => write!(f, "Invalid window size: {}", size),
+            CodropError::MemoryLimitExceeded { limit, requested } => {
+                write!(
+                    f,
+                    "Memory limit exceeded: requested {} exceeds limit {}",
+                    requested, limit
+                )
+            }
             CodropError::Io(msg) => write!(f, "I/O error: {}", msg),
         }
     }

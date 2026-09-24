@@ -25,6 +25,12 @@ const CRC32C_TABLE: [u32; 256] = {
     table
 };
 
+impl Default for Crc32c {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Crc32c {
     pub fn new() -> Self {
         Self { state: 0xFFFFFFFF }
