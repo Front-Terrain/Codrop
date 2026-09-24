@@ -1,0 +1,10 @@
+[package]
+name = "codrop-cli"
+version = "0.1.0"
+edition = "2021"
+authors = ["Front Terrain Inc."]
+description = "Universal Adaptive Compression System CLI Tool"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+libcodrop = { path = "../libcodrop" }

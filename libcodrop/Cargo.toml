@@ -1,0 +1,11 @@
+[package]
+name = "libcodrop"
+version = "0.1.0"
+edition = "2021"
+authors = ["Front Terrain Inc."]
+description = "Universal Adaptive Compression System Core Engine"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+
+[dev-dependencies]

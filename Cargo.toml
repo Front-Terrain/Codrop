@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "libcodrop",
+    "codrop-cli",
+]
+resolver = "2"

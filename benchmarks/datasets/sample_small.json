@@ -1,0 +1,1 @@
+{"rpc":"2.0","method":"telemetry.ping","id":42,"params":{"node_id":"cluster-node-east-04","uptime_sec":184920,"load_avg":[0.14,0.22,0.18],"memory_free_pct":64.2}}
