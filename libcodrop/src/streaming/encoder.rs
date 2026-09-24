@@ -1,11 +1,21 @@
-use std::io::Write;
-use crate::analysis::classifier::{AdaptiveClassifier, CompressionLevel};
 use crate::checksum::{Crc32c, StreamHash64};
-use crate::codec::{LzfCodec, LzhCodec, RawCodec, RleCodec};
+use crate::codec::{RawCodec, RleCodec};
 use crate::error::CodropError;
 use crate::format::{BlockHeader, BlockType, StreamHeader};
+use std::io::Write;
 
 pub const DEFAULT_BLOCK_SIZE: usize = 128 * 1024; // 128 KB
+
+/// Compression levels supported by the Codrop public API.
+/// For M0, all levels utilize the core RAW / RLE decision pipeline.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum CompressionLevel {
+    Fast,
+    #[default]
+    Balanced,
+    Compact,
+    Auto,
+}
 
 pub struct EncoderOptions {
     pub level: CompressionLevel,
@@ -38,10 +48,11 @@ pub struct Encoder<W: Write> {
 
 impl<W: Write> Encoder<W> {
     pub fn new(writer: W, options: EncoderOptions) -> Self {
+        let block_size = options.block_size;
         Self {
             writer,
             options,
-            buffer: Vec::with_capacity(DEFAULT_BLOCK_SIZE),
+            buffer: Vec::with_capacity(block_size),
             stream_hasher: StreamHash64::new(),
             header_written: false,
             finished: false,
@@ -91,24 +102,15 @@ impl<W: Write> Encoder<W> {
         }
 
         let uncompressed_len = self.buffer.len() as u32;
-        let mut chosen_type = AdaptiveClassifier::select_strategy(&self.buffer, self.options.level);
 
-        // Compress according to selected strategy
-        let mut compressed = match chosen_type {
-            BlockType::Raw => RawCodec::encode(&self.buffer),
-            BlockType::Rle => RleCodec::encode(&self.buffer),
-            BlockType::Lzf => LzfCodec::encode(&self.buffer),
-            BlockType::Lzh | BlockType::Lza | BlockType::TextPrefilter | BlockType::Reserved => {
-                LzhCodec::encode(&self.buffer)
-            }
-            BlockType::EndOfStream => Vec::new(),
+        // M0 Decision Logic & Expansion Safeguard:
+        // Try RLE. If RLE produces a strictly smaller result, use RLE; otherwise use RAW.
+        let rle_candidate = RleCodec::encode(&self.buffer);
+        let (chosen_type, compressed) = if rle_candidate.len() < self.buffer.len() {
+            (BlockType::Rle, rle_candidate)
+        } else {
+            (BlockType::Raw, RawCodec::encode(&self.buffer))
         };
-
-        // Zero-Expansion Guarantee: If compressed size >= uncompressed size, fallback to RAW
-        if compressed.len() >= self.buffer.len() {
-            chosen_type = BlockType::Raw;
-            compressed = RawCodec::encode(&self.buffer);
-        }
 
         let checksum = if self.options.include_block_checksum {
             Some(Crc32c::compute(&self.buffer))

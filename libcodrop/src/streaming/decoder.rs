@@ -1,8 +1,8 @@
-use std::io::{Read, Write};
 use crate::checksum::StreamHash64;
-use crate::codec::{LzfCodec, LzhCodec, RawCodec, RleCodec};
+use crate::codec::{RawCodec, RleCodec};
 use crate::error::CodropError;
 use crate::format::{BlockHeader, BlockType, StreamHeader};
+use std::io::{Read, Write};
 
 pub struct DecoderOptions {
     pub max_output_bytes: Option<u64>,
@@ -74,12 +74,21 @@ impl<R: Read> Decoder<R> {
             return Ok(None);
         }
 
-        // Safety limit check
+        // Decompression bomb check against accumulated total
+        let uncompressed_len = block_header.uncompressed_size as u64;
+        let new_total = self
+            .total_decompressed
+            .checked_add(uncompressed_len)
+            .ok_or(CodropError::MemoryLimitExceeded {
+                limit: usize::MAX,
+                requested: usize::MAX,
+            })?;
+
         if let Some(limit) = self.options.max_output_bytes {
-            if self.total_decompressed + (block_header.uncompressed_size as u64) > limit {
+            if new_total > limit {
                 return Err(CodropError::DecompressionBombDetected {
                     limit,
-                    requested: self.total_decompressed + (block_header.uncompressed_size as u64),
+                    requested: new_total,
                 });
             }
         }
@@ -93,7 +102,7 @@ impl<R: Read> Decoder<R> {
             return Err(CodropError::Io(e.to_string()));
         }
 
-        // Decode based on block type
+        // Decode based on block type (M0 supports RAW and RLE)
         let decompressed = match block_header.block_type {
             BlockType::Raw => {
                 RawCodec::decode(&compressed_buf, block_header.uncompressed_size as usize)?
@@ -101,16 +110,9 @@ impl<R: Read> Decoder<R> {
             BlockType::Rle => {
                 RleCodec::decode(&compressed_buf, block_header.uncompressed_size as usize)?
             }
-            BlockType::Lzf => {
-                LzfCodec::decode(&compressed_buf, block_header.uncompressed_size as usize)?
+            unsupported => {
+                return Err(CodropError::UnsupportedBlockType(unsupported));
             }
-            BlockType::Lzh | BlockType::Lza | BlockType::TextPrefilter => {
-                LzhCodec::decode(&compressed_buf, block_header.uncompressed_size as usize)?
-            }
-            BlockType::Reserved => {
-                return Err(CodropError::InvalidBlockType(BlockType::Reserved as u8));
-            }
-            BlockType::EndOfStream => unreachable!(),
         };
 
         // Verify block CRC32c
@@ -119,7 +121,7 @@ impl<R: Read> Decoder<R> {
         }
 
         self.stream_hasher.update(&decompressed);
-        self.total_decompressed += decompressed.len() as u64;
+        self.total_decompressed = new_total;
 
         Ok(Some(decompressed))
     }
