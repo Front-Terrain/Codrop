@@ -58,7 +58,9 @@ impl RleCodec {
                 }
                 shift += 7;
                 if shift >= 32 {
-                    return Err(CodropError::CorruptedEntropyStream("RLE run length overflow".into()));
+                    return Err(CodropError::CorruptedEntropyStream(
+                        "RLE run length overflow".into(),
+                    ));
                 }
             }
 
@@ -67,7 +69,9 @@ impl RleCodec {
             }
 
             if run_len == 0 {
-                return Err(CodropError::CorruptedEntropyStream("Zero run length in RLE".into()));
+                return Err(CodropError::CorruptedEntropyStream(
+                    "Zero run length in RLE".into(),
+                ));
             }
 
             if out.len() + run_len > expected_len {
@@ -113,11 +117,7 @@ mod tests {
 
     #[test]
     fn test_rle_overflow_protection() {
-        let mut bad_stream = Vec::new();
-        bad_stream.push(0x42);
-        // ULEB128 of 1000
-        bad_stream.push(0xE8);
-        bad_stream.push(0x07);
+        let bad_stream = vec![0x42, 0xE8, 0x07];
 
         // Expected length is only 500
         let err = RleCodec::decode(&bad_stream, 500).unwrap_err();
