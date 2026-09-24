@@ -1,10 +1,17 @@
 [package]
 name = "libcodrop"
-version = "0.1.0"
+version = "1.0.0-rc1"
 edition = "2021"
 authors = ["Front Terrain Inc."]
 description = "Universal Adaptive Compression System Core Engine"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/Front-Terrain/Codrop"
+readme = "../README.md"
+keywords = ["compression", "codec", "lossless", "lz", "ans"]
+categories = ["compression"]
+
+[lib]
+crate-type = ["lib", "cdylib", "staticlib"]
 
 [dependencies]
 

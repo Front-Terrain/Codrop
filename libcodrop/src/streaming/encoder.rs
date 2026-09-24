@@ -1,5 +1,5 @@
 use crate::checksum::{Crc32c, StreamHash64};
-use crate::codec::{RawCodec, RleCodec};
+use crate::codec::{LzaCodec, LzfCodec, LzhCodec, RawCodec, RleCodec};
 use crate::error::CodropError;
 use crate::format::{BlockHeader, BlockType, StreamHeader};
 use std::io::Write;
@@ -103,13 +103,111 @@ impl<W: Write> Encoder<W> {
 
         let uncompressed_len = self.buffer.len() as u32;
 
-        // M0 Decision Logic & Expansion Safeguard:
-        // Try RLE. If RLE produces a strictly smaller result, use RLE; otherwise use RAW.
-        let rle_candidate = RleCodec::encode(&self.buffer);
-        let (chosen_type, compressed) = if rle_candidate.len() < self.buffer.len() {
-            (BlockType::Rle, rle_candidate)
-        } else {
-            (BlockType::Raw, RawCodec::encode(&self.buffer))
+        // Decision Logic & Expansion Safeguard (Stage 4 / M2):
+        // Fast profile: primarily LZF (with RLE/RAW fallback).
+        // Balanced profile: evaluates LZH (along with LZF, RLE, and RAW fallback).
+        // Auto / Compact: evaluates all available codecs (RAW, RLE, LZF, LZH).
+        let (chosen_type, compressed) = match self.options.level {
+            CompressionLevel::Fast => {
+                let lzf_candidate = LzfCodec::encode(&self.buffer);
+                let rle_candidate = RleCodec::encode(&self.buffer);
+                if lzf_candidate.len() < self.buffer.len()
+                    && lzf_candidate.len() <= rle_candidate.len()
+                {
+                    (BlockType::Lzf, lzf_candidate)
+                } else if rle_candidate.len() < self.buffer.len() {
+                    (BlockType::Rle, rle_candidate)
+                } else {
+                    (BlockType::Raw, RawCodec::encode(&self.buffer))
+                }
+            }
+            CompressionLevel::Balanced => {
+                let mut best_type = BlockType::Raw;
+                let mut best_payload = RawCodec::encode(&self.buffer);
+
+                let rle_candidate = RleCodec::encode(&self.buffer);
+                if rle_candidate.len() < best_payload.len() {
+                    best_type = BlockType::Rle;
+                    best_payload = rle_candidate;
+                }
+
+                let lzf_candidate = LzfCodec::encode(&self.buffer);
+                if lzf_candidate.len() < best_payload.len() {
+                    best_type = BlockType::Lzf;
+                    best_payload = lzf_candidate;
+                }
+
+                let lzh_candidate = LzhCodec::encode(&self.buffer);
+                if lzh_candidate.len() < best_payload.len() {
+                    best_type = BlockType::Lzh;
+                    best_payload = lzh_candidate;
+                }
+
+                if let Some(cand) = crate::prefilter::try_encode_prefilter(
+                    &self.buffer,
+                    crate::prefilter::PrefilterBackend::Lzh,
+                    5,
+                ) {
+                    if cand.encoded_payload.len() < best_payload.len() {
+                        best_type = BlockType::TextPrefilter;
+                        best_payload = cand.encoded_payload;
+                    }
+                }
+
+                (best_type, best_payload)
+            }
+            CompressionLevel::Compact | CompressionLevel::Auto => {
+                let mut best_type = BlockType::Raw;
+                let mut best_payload = RawCodec::encode(&self.buffer);
+
+                let rle_candidate = RleCodec::encode(&self.buffer);
+                if rle_candidate.len() < best_payload.len() {
+                    best_type = BlockType::Rle;
+                    best_payload = rle_candidate;
+                }
+
+                let lzf_candidate = LzfCodec::encode(&self.buffer);
+                if lzf_candidate.len() < best_payload.len() {
+                    best_type = BlockType::Lzf;
+                    best_payload = lzf_candidate;
+                }
+
+                let lzh_candidate = LzhCodec::encode(&self.buffer);
+                if lzh_candidate.len() < best_payload.len() {
+                    best_type = BlockType::Lzh;
+                    best_payload = lzh_candidate;
+                }
+
+                let lza_candidate = LzaCodec::encode(&self.buffer);
+                if !lza_candidate.is_empty() && lza_candidate.len() < best_payload.len() {
+                    best_type = BlockType::Lza;
+                    best_payload = lza_candidate;
+                }
+
+                if let Some(cand) = crate::prefilter::try_encode_prefilter(
+                    &self.buffer,
+                    crate::prefilter::PrefilterBackend::Lza,
+                    9,
+                ) {
+                    if cand.encoded_payload.len() < best_payload.len() {
+                        best_type = BlockType::TextPrefilter;
+                        best_payload = cand.encoded_payload;
+                    }
+                }
+
+                if let Some(cand) = crate::prefilter::try_encode_prefilter(
+                    &self.buffer,
+                    crate::prefilter::PrefilterBackend::Lzh,
+                    9,
+                ) {
+                    if cand.encoded_payload.len() < best_payload.len() {
+                        best_type = BlockType::TextPrefilter;
+                        best_payload = cand.encoded_payload;
+                    }
+                }
+
+                (best_type, best_payload)
+            }
         };
 
         let checksum = if self.options.include_block_checksum {

@@ -1,5 +1,5 @@
 use crate::checksum::StreamHash64;
-use crate::codec::{RawCodec, RleCodec};
+use crate::codec::{LzaCodec, LzfCodec, LzhCodec, RawCodec, RleCodec};
 use crate::error::CodropError;
 use crate::format::{BlockHeader, BlockType, StreamHeader};
 use std::io::{Read, Write};
@@ -102,7 +102,7 @@ impl<R: Read> Decoder<R> {
             return Err(CodropError::Io(e.to_string()));
         }
 
-        // Decode based on block type (M0 supports RAW and RLE)
+        // Decode based on block type (RAW, RLE, LZF, LZH, and LZA)
         let decompressed = match block_header.block_type {
             BlockType::Raw => {
                 RawCodec::decode(&compressed_buf, block_header.uncompressed_size as usize)?
@@ -110,6 +110,20 @@ impl<R: Read> Decoder<R> {
             BlockType::Rle => {
                 RleCodec::decode(&compressed_buf, block_header.uncompressed_size as usize)?
             }
+            BlockType::Lzf => {
+                LzfCodec::decode(&compressed_buf, block_header.uncompressed_size as usize)?
+            }
+            BlockType::Lzh => {
+                LzhCodec::decode(&compressed_buf, block_header.uncompressed_size as usize)?
+            }
+            BlockType::Lza => {
+                LzaCodec::decode(&compressed_buf, block_header.uncompressed_size as usize)?
+            }
+            BlockType::TextPrefilter => crate::prefilter::decode_prefiltered_payload(
+                &compressed_buf,
+                block_header.uncompressed_size as usize,
+                block_header.uncompressed_size as usize,
+            )?,
             unsupported => {
                 return Err(CodropError::UnsupportedBlockType(unsupported));
             }

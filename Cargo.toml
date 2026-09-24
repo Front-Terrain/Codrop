@@ -2,5 +2,6 @@
 members = [
     "libcodrop",
     "codrop-cli",
+    "codrop-wasm",
 ]
 resolver = "2"

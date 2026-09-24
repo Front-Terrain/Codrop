@@ -4,11 +4,18 @@ version = 4
 
 [[package]]
 name = "codrop-cli"
-version = "0.1.0"
+version = "1.0.0-rc1"
+dependencies = [
+ "libcodrop",
+]
+
+[[package]]
+name = "codrop-wasm"
+version = "1.0.0-rc1"
 dependencies = [
  "libcodrop",
 ]
 
 [[package]]
 name = "libcodrop"
-version = "0.1.0"
+version = "1.0.0-rc1"

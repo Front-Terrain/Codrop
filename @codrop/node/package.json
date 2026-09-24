@@ -1,0 +1,23 @@
+{
+  "name": "@codrop/node",
+  "version": "1.0.0-rc1",
+  "description": "Universal Adaptive Compression System Node.js & WebAssembly SDK",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "keywords": [
+    "compression",
+    "codrop",
+    "cdp",
+    "wasm",
+    "lossless"
+  ],
+  "author": "Front Terrain Inc.",
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Front-Terrain/Codrop.git"
+  }
+}

@@ -1,6 +1,9 @@
 use crate::format::BlockType;
 use std::fmt;
 
+/// Result alias for Codrop operations.
+pub type CodropResult<T> = Result<T, CodropError>;
+
 /// Primary error type for all Codrop operations.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CodropError {
@@ -48,6 +51,15 @@ pub enum CodropError {
 
     /// Memory allocation request exceeds the configured safety limit.
     MemoryLimitExceeded { limit: usize, requested: usize },
+
+    /// Prefilter type is unknown or unsupported.
+    UnsupportedPrefilter(u8),
+
+    /// Static dictionary identifier or version is unrecognized.
+    UnknownDictionary { dict_id: u16, version: u8 },
+
+    /// Prefilter stream data or token descriptor is corrupted.
+    CorruptedPrefilterData(String),
 
     /// Generic I/O error during reading or writing.
     Io(String),
@@ -124,6 +136,19 @@ impl fmt::Display for CodropError {
                     "Memory limit exceeded: requested {} exceeds limit {}",
                     requested, limit
                 )
+            }
+            CodropError::UnsupportedPrefilter(id) => {
+                write!(f, "Unsupported prefilter type: {}", id)
+            }
+            CodropError::UnknownDictionary { dict_id, version } => {
+                write!(
+                    f,
+                    "Unknown dictionary ID 0x{:04X} version {}",
+                    dict_id, version
+                )
+            }
+            CodropError::CorruptedPrefilterData(msg) => {
+                write!(f, "Corrupted prefilter data: {}", msg)
             }
             CodropError::Io(msg) => write!(f, "I/O error: {}", msg),
         }

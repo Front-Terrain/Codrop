@@ -1,7 +1,7 @@
-# Codrop Binary Format & Compression Specification (v0.1.0-draft)
+# Codrop Binary Format & Compression Specification (v1.0.0-rc1)
 
-**Status:** Draft  
-**Target Format Version:** 1 (`0x01`)  
+**Status:** Release Candidate (Phase 7 Complete)  
+**Target Format Version:** 1 (`0x01` / `0x10`)  
 **MIME Type:** `application/x-codrop`  
 **File Extension:** `.cdp`  
 **Standard Endianness:** Little-Endian (LE)

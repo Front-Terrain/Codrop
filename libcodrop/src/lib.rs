@@ -1,9 +1,12 @@
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
 
 pub mod checksum;
 pub mod codec;
+pub mod entropy;
 pub mod error;
+pub mod ffi;
 pub mod format;
+pub mod prefilter;
 pub mod streaming;
 
 use std::io::Cursor;
@@ -155,24 +158,27 @@ mod tests {
 
     #[test]
     fn test_unsupported_future_block_type_error() {
-        // Construct a stream that declares BlockType::Lzf (2)
+        // Construct a stream that declares BlockType::TextPrefilter (5), which is unsupported until Phase 6
         let mut header = StreamHeader::default();
         header.flags.has_stream_checksum = false;
         let mut buf = Vec::new();
         header.write_to(&mut buf).unwrap();
 
-        let lzf_block = BlockHeader {
-            block_type: BlockType::Lzf,
+        let rc_block = BlockHeader {
+            block_type: BlockType::ReservedCustom,
             has_checksum: false,
             is_last: true,
             compressed_size: 4,
             uncompressed_size: 4,
             checksum: None,
         };
-        lzf_block.write_to(&mut buf).unwrap();
+        rc_block.write_to(&mut buf).unwrap();
         buf.extend_from_slice(b"1234");
 
         let err = decompress(&buf).unwrap_err();
-        assert_eq!(err, CodropError::UnsupportedBlockType(BlockType::Lzf));
+        assert_eq!(
+            err,
+            CodropError::UnsupportedBlockType(BlockType::ReservedCustom)
+        );
     }
 }

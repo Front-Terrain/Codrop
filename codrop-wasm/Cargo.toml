@@ -1,0 +1,13 @@
+[package]
+name = "codrop-wasm"
+version = "1.0.0-rc1"
+edition = "2021"
+authors = ["Front Terrain Inc."]
+description = "Universal Adaptive Compression System WebAssembly Bindings"
+license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+libcodrop = { path = "../libcodrop" }
