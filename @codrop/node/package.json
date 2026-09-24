@@ -1,9 +1,15 @@
 {
-  "name": "@codrop/node",
+  "name": "codrop",
   "version": "1.0.0-rc1",
   "description": "Universal Adaptive Compression System Node.js & WebAssembly SDK",
   "main": "index.js",
   "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "codrop_wasm.wasm",
+    "README.md"
+  ],
   "scripts": {
     "test": "node test.js"
   },
