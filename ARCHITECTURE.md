@@ -118,8 +118,9 @@ codrop/
 │   ├── Cargo.toml
 │   └── src/
 │       └── lib.rs              # wasm-bindgen bindings
-├── codrop-python/              # PyO3 bindings
-├── @codrop/node                # Node.js NAPI bindings
+├── codrop-python/              # Python bindings
+├── @codrop/node                # Node.js WebAssembly SDK
+├── codrop_dart/                # Dart & Flutter pub.dev SDK (FFI)
 └── codrop-mobile/              # C FFI bindings for Swift/Kotlin
 ```
 

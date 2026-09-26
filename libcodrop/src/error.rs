@@ -63,6 +63,9 @@ pub enum CodropError {
 
     /// Generic I/O error during reading or writing.
     Io(String),
+
+    /// Image decoding, encoding, or processing error.
+    ImageError(String),
 }
 
 impl fmt::Display for CodropError {
@@ -151,6 +154,7 @@ impl fmt::Display for CodropError {
                 write!(f, "Corrupted prefilter data: {}", msg)
             }
             CodropError::Io(msg) => write!(f, "I/O error: {}", msg),
+            CodropError::ImageError(msg) => write!(f, "Image error: {}", msg),
         }
     }
 }

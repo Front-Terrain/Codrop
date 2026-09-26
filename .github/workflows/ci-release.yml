@@ -29,9 +29,27 @@ jobs:
       - name: Test Suite
         run: cargo test --workspace --verbose
 
+  dart-check:
+    name: Dart SDK Format, Lint & Dry-Run
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: codrop_dart
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - name: Install dependencies
+        run: dart pub get
+      - name: Format Check
+        run: dart format --output=none --set-exit-if-changed .
+      - name: Dart Analyze
+        run: dart analyze --fatal-infos
+      - name: Verify pub.dev Package (Dry Run)
+        run: dart pub publish --dry-run
+
   release:
     name: Build Release Binaries
-    needs: test
+    needs: [test, dart-check]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ${{ matrix.os }}
     strategy:

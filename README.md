@@ -106,5 +106,4 @@ The `codrop` CLI returns standard, predictable exit codes:
 - [x] **M2 (Phase 4):** Canonical Huffman Entropy & Hash Chains (`LZH` Block Type 3, Bitstream, Tree Rebalancing)
 - [x] **M5 (Phase 5):** Finite State Entropy / tANS (`LZA` Block Type 4, Table-based ANS State Machine)
 - [x] **Phase 6:** Data-Aware Prefilters & Static Dictionaries (Text, JSON, Delta, Versioned Dictionaries)
-- [x] **Phase 7 (Release Candidate):** Optimization, Hardening, Benchmarking, C ABI, WASM, Property & Golden Vectors (`v1.0.0-rc1`)
-- [ ] **M6:** Cross-Platform Bindings (C ABI, WASM, Node.js, Python, Mobile)
+- [x] **M6:** Cross-Platform Bindings (C ABI, WASM, Node.js, Python, Dart/Flutter for pub.dev, Mobile)

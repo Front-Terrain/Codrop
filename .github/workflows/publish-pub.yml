@@ -1,0 +1,40 @@
+name: Publish to pub.dev
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  id-token: write # Required for pub.dev automated publishing with OIDC
+  contents: read
+
+jobs:
+  publish:
+    name: Publish codrop to pub.dev
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: codrop_dart
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Dart SDK
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Check code formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze package
+        run: dart analyze --fatal-infos
+
+      - name: Verify package dry-run
+        run: dart pub publish --dry-run
+
+      - name: Publish package to pub.dev
+        run: dart pub publish --force

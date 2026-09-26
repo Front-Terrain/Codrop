@@ -6,6 +6,7 @@ pub mod entropy;
 pub mod error;
 pub mod ffi;
 pub mod format;
+pub mod image_codec;
 pub mod prefilter;
 pub mod streaming;
 
@@ -13,6 +14,7 @@ use std::io::Cursor;
 
 pub use error::CodropError;
 pub use format::{BlockHeader, BlockType, HeaderFlags, StreamHeader};
+pub use image_codec::{compress_image, CodropImageFormat, ImageOptions};
 pub use streaming::{
     CompressionLevel, Decoder, DecoderOptions, Encoder, EncoderOptions, DEFAULT_BLOCK_SIZE,
 };
