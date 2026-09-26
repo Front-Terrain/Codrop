@@ -1,3 +1,8 @@
+## 1.0.1
+
+* Added `compressImage` API supporting WebP and JPEG compression.
+* Formatted codebase and updated bindings.
+
 ## 1.0.0
 
 * Fixed repository URL in `pubspec.yaml` for pub.dev verification.
