@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Front Terrain Inc.
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use std::io::Cursor;
+use crate::error::CodropError;
 use image::codecs::jpeg::JpegEncoder;
 use image::codecs::png::PngEncoder;
 use image::codecs::webp::WebPEncoder;
-use crate::error::CodropError;
+use std::io::Cursor;
 
 /// Supported image formats for Codrop Image compression.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -52,7 +52,9 @@ impl Default for ImageOptions {
 /// Compress an image buffer using Codrop's image compression pipeline.
 pub fn compress_image(data: &[u8], options: ImageOptions) -> Result<Vec<u8>, CodropError> {
     if data.is_empty() {
-        return Err(CodropError::ImageError("Input image buffer is empty".to_string()));
+        return Err(CodropError::ImageError(
+            "Input image buffer is empty".to_string(),
+        ));
     }
 
     let dyn_img = image::load_from_memory(data)
@@ -69,18 +71,21 @@ pub fn compress_image(data: &[u8], options: ImageOptions) -> Result<Vec<u8>, Cod
     match target_format {
         CodropImageFormat::WebP | CodropImageFormat::Auto => {
             let encoder = WebPEncoder::new_lossless(&mut cursor);
-            dyn_img.write_with_encoder(encoder)
+            dyn_img
+                .write_with_encoder(encoder)
                 .map_err(|e| CodropError::ImageError(format!("WebP encoding failed: {}", e)))?;
         }
         CodropImageFormat::Jpeg => {
             let quality = options.quality.clamp(1, 100);
             let encoder = JpegEncoder::new_with_quality(&mut cursor, quality);
-            dyn_img.write_with_encoder(encoder)
+            dyn_img
+                .write_with_encoder(encoder)
                 .map_err(|e| CodropError::ImageError(format!("JPEG encoding failed: {}", e)))?;
         }
         CodropImageFormat::Png => {
             let encoder = PngEncoder::new(&mut cursor);
-            dyn_img.write_with_encoder(encoder)
+            dyn_img
+                .write_with_encoder(encoder)
                 .map_err(|e| CodropError::ImageError(format!("PNG encoding failed: {}", e)))?;
         }
     }
@@ -91,7 +96,7 @@ pub fn compress_image(data: &[u8], options: ImageOptions) -> Result<Vec<u8>, Cod
 #[cfg(test)]
 mod tests {
     use super::*;
-    use image::{RgbaImage, Rgba};
+    use image::{Rgba, RgbaImage};
 
     #[test]
     fn test_compress_image_empty() {
@@ -111,7 +116,8 @@ mod tests {
         }
 
         let mut png_bytes = Vec::new();
-        img.write_with_encoder(PngEncoder::new(&mut png_bytes)).unwrap();
+        img.write_with_encoder(PngEncoder::new(&mut png_bytes))
+            .unwrap();
 
         // Compress to WebP
         let webp_compressed = compress_image(
@@ -120,7 +126,8 @@ mod tests {
                 format: CodropImageFormat::WebP,
                 quality: 85,
             },
-        ).unwrap();
+        )
+        .unwrap();
 
         assert!(!webp_compressed.is_empty());
         assert_eq!(&webp_compressed[0..4], b"RIFF");
@@ -133,7 +140,8 @@ mod tests {
                 format: CodropImageFormat::Jpeg,
                 quality: 80,
             },
-        ).unwrap();
+        )
+        .unwrap();
         assert!(!jpeg_compressed.is_empty());
         assert_eq!(&jpeg_compressed[0..2], &[0xFF, 0xD8]);
     }

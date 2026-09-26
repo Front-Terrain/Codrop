@@ -71,7 +71,8 @@ class CodropBindings {
             .lookup<NativeFunction<_CodropDecompressC>>('codrop_decompress')
             .asFunction<_CodropDecompressDart>(),
         _imageCompress = dylib
-            .lookup<NativeFunction<_CodropImageCompressC>>('codrop_image_compress')
+            .lookup<NativeFunction<_CodropImageCompressC>>(
+                'codrop_image_compress')
             .asFunction<_CodropImageCompressDart>(),
         _free = dylib
             .lookup<NativeFunction<_CodropFreeC>>('codrop_free')

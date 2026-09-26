@@ -200,7 +200,10 @@ fn cmd_image(args: &[String]) -> Result<(), CodropError> {
                 CodropImageFormat::Png => "png",
                 CodropImageFormat::Jpeg => "jpg",
             };
-            let stem = p.file_stem().and_then(|s| s.to_str()).unwrap_or("compressed");
+            let stem = p
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("compressed");
             p.set_file_name(format!("{}_compressed.{}", stem, ext));
             p
         });

@@ -266,7 +266,15 @@ mod tests {
         let corrupt_data = b"NOT_CDP_DATA";
         let mut dec_ptr: *mut u8 = std::ptr::null_mut();
         let mut dec_len: usize = 0;
-        let res = unsafe { codrop_decompress(corrupt_data.as_ptr(), corrupt_data.len(), 0, &mut dec_ptr, &mut dec_len) };
+        let res = unsafe {
+            codrop_decompress(
+                corrupt_data.as_ptr(),
+                corrupt_data.len(),
+                0,
+                &mut dec_ptr,
+                &mut dec_len,
+            )
+        };
         assert_eq!(res, CODROP_ERR_CORRUPT);
     }
 
@@ -275,16 +283,20 @@ mod tests {
         let data = b"Repeated data for decompression limit check!".repeat(10);
         let mut comp_ptr: *mut u8 = std::ptr::null_mut();
         let mut comp_len: usize = 0;
-        let res_enc = unsafe { codrop_compress(data.as_ptr(), data.len(), 0, &mut comp_ptr, &mut comp_len) };
+        let res_enc =
+            unsafe { codrop_compress(data.as_ptr(), data.len(), 0, &mut comp_ptr, &mut comp_len) };
         assert_eq!(res_enc, CODROP_OK);
 
         // Decompress with limit of only 10 bytes
         let mut dec_ptr: *mut u8 = std::ptr::null_mut();
         let mut dec_len: usize = 0;
-        let res_dec = unsafe { codrop_decompress(comp_ptr, comp_len, 10, &mut dec_ptr, &mut dec_len) };
+        let res_dec =
+            unsafe { codrop_decompress(comp_ptr, comp_len, 10, &mut dec_ptr, &mut dec_len) };
         assert_eq!(res_dec, CODROP_ERR_LIMIT_EXCEEDED);
 
-        unsafe { codrop_free(comp_ptr, comp_len); }
+        unsafe {
+            codrop_free(comp_ptr, comp_len);
+        }
     }
 
     #[test]
@@ -297,7 +309,8 @@ mod tests {
             *p = Rgba([0, 255, 0, 255]);
         }
         let mut png_bytes = Vec::new();
-        img.write_with_encoder(PngEncoder::new(&mut png_bytes)).unwrap();
+        img.write_with_encoder(PngEncoder::new(&mut png_bytes))
+            .unwrap();
 
         let mut out_ptr: *mut u8 = std::ptr::null_mut();
         let mut out_len: usize = 0;
@@ -324,5 +337,3 @@ mod tests {
         }
     }
 }
-
-
