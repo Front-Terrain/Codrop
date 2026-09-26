@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: codrop
-Version: 1.0.0rc1
+Version: 1.0.0
 Summary: Universal Adaptive Compression System Python Bindings
 Author: Front Terrain Inc.
 License: MIT OR Apache-2.0

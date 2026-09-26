@@ -41,6 +41,23 @@ typedef _CodropDecompressDart = int Function(
 typedef _CodropFreeC = Void Function(Pointer<Uint8> ptr, Size len);
 typedef _CodropFreeDart = void Function(Pointer<Uint8> ptr, int len);
 
+typedef _CodropImageCompressC = Int32 Function(
+  Pointer<Uint8> src,
+  Size srcLen,
+  Uint8 format,
+  Uint8 quality,
+  Pointer<Pointer<Uint8>> outPtr,
+  Pointer<Size> outLen,
+);
+typedef _CodropImageCompressDart = int Function(
+  Pointer<Uint8> src,
+  int srcLen,
+  int format,
+  int quality,
+  Pointer<Pointer<Uint8>> outPtr,
+  Pointer<Size> outLen,
+);
+
 /// Direct FFI bindings for `libcodrop`.
 class CodropBindings {
   CodropBindings(DynamicLibrary dylib)
@@ -53,6 +70,9 @@ class CodropBindings {
         _decompress = dylib
             .lookup<NativeFunction<_CodropDecompressC>>('codrop_decompress')
             .asFunction<_CodropDecompressDart>(),
+        _imageCompress = dylib
+            .lookup<NativeFunction<_CodropImageCompressC>>('codrop_image_compress')
+            .asFunction<_CodropImageCompressDart>(),
         _free = dylib
             .lookup<NativeFunction<_CodropFreeC>>('codrop_free')
             .asFunction<_CodropFreeDart>();
@@ -60,6 +80,7 @@ class CodropBindings {
   final _CodropVersionDart _version;
   final _CodropCompressDart _compress;
   final _CodropDecompressDart _decompress;
+  final _CodropImageCompressDart _imageCompress;
   final _CodropFreeDart _free;
 
   /// Returns the null-terminated version string of Codrop.
@@ -89,6 +110,18 @@ class CodropBindings {
     Pointer<Size> outLen,
   ) {
     return _decompress(src, srcLen, maxOutputBytes, outPtr, outLen);
+  }
+
+  /// Compresses an image buffer into an allocated buffer.
+  int compressImage(
+    Pointer<Uint8> src,
+    int srcLen,
+    int format,
+    int quality,
+    Pointer<Pointer<Uint8>> outPtr,
+    Pointer<Size> outLen,
+  ) {
+    return _imageCompress(src, srcLen, format, quality, outPtr, outLen);
   }
 
   /// Frees an allocated buffer.

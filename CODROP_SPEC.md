@@ -1,4 +1,4 @@
-# Codrop Binary Format & Compression Specification (v1.0.0-rc1)
+# Codrop Binary Format & Compression Specification (v1.0.0)
 
 **Status:** Release Candidate (Phase 7 Complete)  
 **Target Format Version:** 1 (`0x01` / `0x10`)  

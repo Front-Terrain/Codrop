@@ -26,7 +26,7 @@ Add `codrop` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  codrop: ^1.0.0-rc.2
+  codrop: ^1.0.0
 ```
 
 Or run:

@@ -1,6 +1,6 @@
 [package]
 name = "codrop-cli"
-version = "1.0.0-rc1"
+version = "1.0.0"
 edition = "2021"
 authors = ["Front Terrain Inc."]
 description = "Universal Adaptive Compression System CLI Tool"
@@ -11,7 +11,7 @@ keywords = ["compression", "cli", "cdp", "archive"]
 categories = ["command-line-utilities", "compression"]
 
 [dependencies]
-libcodrop = { path = "../libcodrop", version = "1.0.0-rc1" }
+libcodrop = { path = "../libcodrop", version = "1.0.0" }
 
 [[bin]]
 name = "codrop"

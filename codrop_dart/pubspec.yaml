@@ -1,6 +1,6 @@
 name: codrop
 description: High-performance universal adaptive compression system for Dart and Flutter. Features lossless compression, C FFI bindings, and multi-profile codecs.
-version: 1.0.0-rc.2
+version: 1.0.0
 homepage: https://github.com/Front-Terrain/Codrop
 repository: https://github.com/Front-Terrain/Codrop
 issue_tracker: https://github.com/Front-Terrain/Codrop/issues

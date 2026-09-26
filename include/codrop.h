@@ -1,6 +1,6 @@
 /**
  * Codrop Universal Adaptive Compression System
- * C ABI Header (v1.0.0-rc1)
+ * C ABI Header (v1.0.0)
  *
  * Copyright (c) Front Terrain Inc.
  * SPDX-License-Identifier: MIT OR Apache-2.0
@@ -31,7 +31,7 @@ extern "C" {
 #define CODROP_LEVEL_COMPACT 3
 
 /**
- * Returns the null-terminated version string of Codrop (e.g. "1.0.0-rc1").
+ * Returns the null-terminated version string of Codrop (e.g. "1.0.0").
  */
 const char* codrop_version(void);
 
@@ -76,12 +76,40 @@ int32_t codrop_decompress(
 );
 
 /**
- * Frees a buffer allocated by codrop_compress or codrop_decompress.
+ * Frees a buffer allocated by codrop_compress, codrop_decompress, or codrop_image_compress.
  *
  * @param ptr Pointer to buffer previously allocated by Codrop
  * @param len Length returned in out_len
  */
 void codrop_free(uint8_t* ptr, size_t len);
+
+/* Image target formats */
+#define CODROP_IMAGE_AUTO 0
+#define CODROP_IMAGE_WEBP 1
+#define CODROP_IMAGE_PNG 2
+#define CODROP_IMAGE_JPEG 3
+
+/**
+ * Compresses an image buffer (PNG, JPEG, WebP, BMP) using perceptual visual compression.
+ *
+ * @param src Pointer to input image data
+ * @param src_len Length of input image data in bytes
+ * @param format Target format (0=Auto/WebP, 1=WebP, 2=PNG, 3=JPEG)
+ * @param quality Quality factor 1-100 (0 defaults to 85 for visually lossless 75-90% savings)
+ * @param out_ptr Pointer to receive pointer to allocated output buffer
+ * @param out_len Pointer to receive length of allocated output buffer
+ * @return CODROP_OK on success, or negative error code on failure.
+ *
+ * The buffer written to *out_ptr must be freed using codrop_free().
+ */
+int32_t codrop_image_compress(
+    const uint8_t* src,
+    size_t src_len,
+    uint8_t format,
+    uint8_t quality,
+    uint8_t** out_ptr,
+    size_t* out_len
+);
 
 #ifdef __cplusplus
 }

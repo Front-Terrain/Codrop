@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "codrop"
-version = "1.0.0rc1"
+version = "1.0.0"
 description = "Universal Adaptive Compression System Python Bindings"
 readme = "README.md"
 authors = [{ name = "Front Terrain Inc." }]

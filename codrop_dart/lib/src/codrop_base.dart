@@ -29,6 +29,26 @@ enum CodropLevel {
   final int value;
 }
 
+/// Target image formats for Codrop perceptual visual compression.
+enum CodropImageFormat {
+  /// Automatic format selection (defaults to WebP for 75-90% savings).
+  auto(0),
+
+  /// Modern WebP format (ultra-compact, visually lossless).
+  webp(1),
+
+  /// Optimized PNG format.
+  png(2),
+
+  /// JPEG format with configurable quality.
+  jpeg(3);
+
+  const CodropImageFormat(this.value);
+
+  /// The integer value representing this format in the C ABI.
+  final int value;
+}
+
 /// Exception thrown when a Codrop operation fails.
 class CodropException implements Exception {
   /// Creates a new [CodropException] with an error code and description.
@@ -91,7 +111,7 @@ class Codrop {
   /// Whether the Codrop native engine is available on the current platform.
   static bool get isSupported => CodropLoader.isSupported;
 
-  /// Returns the Codrop engine version string (e.g. `1.0.0-rc1`).
+  /// Returns the Codrop engine version string (e.g. `1.0.0`).
   static String get version => CodropLoader.bindings.getVersion();
 
   /// Compresses input [data] using the Codrop compression algorithm.
@@ -146,6 +166,70 @@ class Codrop {
         throw const CodropException(
           -99,
           'Null output pointer returned from native compression',
+        );
+      }
+
+      try {
+        return Uint8List.fromList(outPtr.asTypedList(outLen));
+      } finally {
+        bindings.free(outPtr, outLen);
+      }
+    } finally {
+      malloc.free(srcPtr);
+      malloc.free(outPtrPtr);
+      malloc.free(outLenPtr);
+    }
+  }
+
+  /// Compresses an image using perceptual visual compression (WebP, PNG, JPEG).
+  ///
+  /// [format] controls target output format (defaults to [CodropImageFormat.auto] / WebP).
+  /// [quality] is a factor from 1 to 100 (defaults to 85 for visually lossless 75-90% savings).
+  ///
+  /// Returns the compressed image bytes.
+  /// Throws [CodropException] if image compression fails.
+  static Uint8List compressImage(
+    List<int> data, {
+    CodropImageFormat format = CodropImageFormat.auto,
+    int quality = 85,
+  }) {
+    final bindings = CodropLoader.bindings;
+    final srcLen = data.length;
+
+    final Pointer<Uint8> srcPtr = malloc<Uint8>(srcLen > 0 ? srcLen : 1);
+    if (data is Uint8List) {
+      srcPtr.asTypedList(srcLen).setAll(0, data);
+    } else {
+      final typedList = srcPtr.asTypedList(srcLen);
+      for (var i = 0; i < srcLen; i++) {
+        typedList[i] = data[i];
+      }
+    }
+
+    final Pointer<Pointer<Uint8>> outPtrPtr = malloc<Pointer<Uint8>>();
+    final Pointer<Size> outLenPtr = malloc<Size>();
+
+    try {
+      final res = bindings.compressImage(
+        srcPtr,
+        srcLen,
+        format.value,
+        quality.clamp(1, 100),
+        outPtrPtr,
+        outLenPtr,
+      );
+
+      if (res != 0) {
+        throw CodropException.fromErrorCode(res, 'Image compression failed');
+      }
+
+      final outPtr = outPtrPtr.value;
+      final outLen = outLenPtr.value;
+
+      if (outPtr == nullptr) {
+        throw const CodropException(
+          -99,
+          'Null output pointer returned from native image compression',
         );
       }
 

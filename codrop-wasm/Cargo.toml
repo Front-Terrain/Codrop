@@ -1,6 +1,6 @@
 [package]
 name = "codrop-wasm"
-version = "1.0.0-rc1"
+version = "1.0.0"
 edition = "2021"
 authors = ["Front Terrain Inc."]
 description = "Universal Adaptive Compression System WebAssembly Bindings"

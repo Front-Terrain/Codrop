@@ -120,5 +120,5 @@ module.exports = {
   LEVEL_FAST,
   LEVEL_BALANCED,
   LEVEL_COMPACT,
-  version: '1.0.0-rc1',
+  version: '1.0.0',
 };

@@ -7,7 +7,7 @@ use libcodrop::{compress as codrop_compress_rs, decompress_with_limit, Compressi
 
 /// Returns the current Codrop WASM engine version string.
 pub fn version() -> &'static str {
-    "1.0.0-rc1"
+    "1.0.0"
 }
 
 /// Compress an in-memory byte slice using the given level (0: Fast, 1: Balanced, 2: Compact, 3: Auto).
@@ -82,7 +82,7 @@ mod tests {
 
     #[test]
     fn test_wasm_version() {
-        assert_eq!(version(), "1.0.0-rc1");
+        assert_eq!(version(), "1.0.0");
     }
 
     #[test]

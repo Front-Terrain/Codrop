@@ -8,9 +8,9 @@ The `.cdp` container format is rigorously specified so that future encoder optim
 
 ---
 
-## Current Status: Phase 7 — Optimization, Hardening, Benchmarking & Release Readiness (v1.0.0-rc1)
+## Current Status: Phase 7 — Optimization, Hardening, Benchmarking & Release Readiness (v1.0.0)
 
-Codrop is at **Release Candidate (`v1.0.0-rc1`)**:
+Codrop is at **Release Candidate (`v1.0.0`)**:
 - **Format Stability:** Strictly locked to the `CDP1` binary stream container format (version 1.0).
 - **Supported Block Types:**
   - `RAW` (Block Type 0): Verbatim byte passthrough with zero expansion.
